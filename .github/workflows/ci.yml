@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  core-tests:
+    name: TesseraCore (SPM)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run core engine tests
+        run: swift test
+
+  app-build-and-test:
+    name: App build + tests (iOS Simulator)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build & test
+        run: |
+          set -o pipefail
+          DEVICE=$(xcrun simctl list devices available | grep -oE 'iPhone 1[0-9][^(]*' | head -1 | xargs)
+          echo "Using simulator: ${DEVICE:-iPhone 15}"
+          xcodebuild \
+            -project Tessera.xcodeproj \
+            -scheme Tessera \
+            -destination "platform=iOS Simulator,name=${DEVICE:-iPhone 15}" \
+            -resultBundlePath TestResults \
+            test | xcpretty || xcodebuild \
+            -project Tessera.xcodeproj \
+            -scheme Tessera \
+            -destination "platform=iOS Simulator,name=${DEVICE:-iPhone 15}" \
+            test
