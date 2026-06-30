@@ -4,14 +4,17 @@ Tessera is a calm, gorgeous daily tessellation puzzle for iOS with the tagline: 
 
 Players place and rotate irregular/polyomino tiles onto a surface so the pattern tessellates with no gaps or overlaps. Tiles subtly breathe, and a solved stable board locks with a satisfying ripple animation.
 
+> **Status: pre-build / docs-first.** Only the pure-Swift puzzle core (`Sources/TesseraCore`) and its 3 unit tests exist today. The app target, board UI, generator, solvability solver, persistence, share, and StoreKit are not built yet. See **[LAUNCH_READINESS.md](LAUNCH_READINESS.md)** for the full launch scope, per-feature acceptance criteria, and the ordered build path.
+
 ## Current Scope
 
 This repository currently contains:
 
 - Source-of-truth product and engineering docs in `Docs/`.
-- Native iOS app folder scaffolding in `Tessera/`.
-- A pure-Swift puzzle foundation in `Sources/TesseraCore`.
-- Swift Package tests in `Tests/TesseraCoreTests`.
+- The canonical launch-scope spec in `LAUNCH_READINESS.md`.
+- Native iOS app folder scaffolding in `Tessera/` (currently empty `.gitkeep` placeholders).
+- A pure-Swift puzzle foundation in `Sources/TesseraCore` (grid, tiles, rotations, placement validation, solved-state, deterministic daily seed).
+- Swift Package tests in `Tests/TesseraCoreTests` (3 passing).
 
 ## Locked V1 Direction
 
