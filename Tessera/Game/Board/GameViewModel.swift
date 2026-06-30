@@ -196,6 +196,27 @@ final class GameViewModel {
         evaluateSolved(triggerCallback: true)
     }
 
+    /// Drag-free placement: places the currently selected tray piece so that it
+    /// covers `cell`, trying each of the piece's cells as the one landing on the
+    /// tap. Returns whether a placement was made. This is the accessible path
+    /// (VoiceOver / Switch Control can't drag) and a faster option for everyone:
+    /// tap a piece to select, then tap a spot.
+    @discardableResult
+    func placeSelected(coveringBoardCell cell: GridPoint) -> Bool {
+        guard let id = selectedTileID, placements[id] == nil else { return false }
+        let rot = rotation(for: id)
+        let cells = displayCells(for: id, rotation: rot)
+        for anchor in cells {
+            let displayOrigin = cell - anchor
+            if isValidPlacement(tileID: id, rotation: rot, displayOrigin: displayOrigin) {
+                commitPlacement(tileID: id, rotation: rot, displayOrigin: displayOrigin)
+                return true
+            }
+        }
+        Haptics.invalid()
+        return false
+    }
+
     /// Picks a placed piece back up, returning it to the tray.
     func pickUp(placedTileID id: String) {
         guard placements[id] != nil else { return }

@@ -47,6 +47,26 @@ final class GameViewModelTests: XCTestCase {
         XCTAssertFalse(vm.isSolved)
     }
 
+    func testTapToPlaceSelectedPiece() {
+        let puzzle = CuratedPuzzles.tutorialPlace()
+        let vm = GameViewModel(puzzle: puzzle)
+        // Select the first tile and place it by "tapping" a cell it legally covers.
+        let tileID = puzzle.board.tiles[0].id
+        vm.selectedTileID = tileID
+        let cell = puzzle.board.surface.sorted().first!
+        XCTAssertTrue(vm.placeSelected(coveringBoardCell: cell))
+        XCTAssertNotNil(vm.placement(for: tileID))
+        XCTAssertFalse(vm.trayOrder.contains(tileID))
+    }
+
+    func testTapToPlaceWithNoSelectionDoesNothing() {
+        let puzzle = CuratedPuzzles.tutorialPlace()
+        let vm = GameViewModel(puzzle: puzzle)
+        vm.selectedTileID = nil
+        XCTAssertFalse(vm.placeSelected(coveringBoardCell: GridPoint(x: 0, y: 0)))
+        XCTAssertEqual(vm.remainingCount, puzzle.board.tiles.count)
+    }
+
     func testResetClearsBoard() {
         let puzzle = CuratedPuzzles.tutorialPlace()
         let vm = GameViewModel(puzzle: puzzle)

@@ -49,6 +49,9 @@ struct TrayView: View {
             )
             .accessibilityElement()
             .accessibilityLabel("Piece, \(cells.count) cells")
-            .accessibilityHint(isSelected ? "Selected. Double tap to deselect, or drag to the board." : "Double tap to select, then use Rotate. Drag to place on the board.")
+            .accessibilityValue(isSelected ? "Selected" : "")
+            .accessibilityHint(isSelected
+                ? "Selected. Use Rotate, then tap a spot on the board to place it. Double tap to deselect."
+                : "Double tap to select, then tap a spot on the board to place it.")
     }
 }

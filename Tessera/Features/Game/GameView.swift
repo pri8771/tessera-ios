@@ -127,8 +127,26 @@ struct GameView: View {
                     .onAppear { boardFrame = geo.frame(in: .named("game")) }
                     .onChange(of: geo.frame(in: .named("game"))) { _, new in boardFrame = new }
             )
+            // Drag-free placement: with a piece selected, tap an empty spot to place
+            // it there. Keeps the board playable without dragging (accessibility) and
+            // is a faster path for everyone. Taps on placed pieces are handled inside
+            // BoardView (pick up) and take precedence.
+            .contentShape(Rectangle())
+            .gesture(
+                SpatialTapGesture(coordinateSpace: .named("game")).onEnded { value in
+                    guard vm.selectedTileID != nil else { return }
+                    let local = CGPoint(x: value.location.x - boardFrame.minX,
+                                        y: value.location.y - boardFrame.minY)
+                    let cell = BoardGeometry(surface: vm.board.surface, containerSize: geo.size, inset: 14).cell(at: local)
+                    vm.placeSelected(coveringBoardCell: cell)
+                }
+            )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityElement()
+        .accessibilityLabel("Puzzle board")
+        .accessibilityValue("\(vm.board.tiles.count - vm.remainingCount) of \(vm.board.tiles.count) pieces placed")
+        .accessibilityHint("Select a piece below, then tap a spot here to place it.")
     }
 
     // MARK: - Controls
