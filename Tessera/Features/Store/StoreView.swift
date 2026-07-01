@@ -43,7 +43,51 @@ struct StoreView: View {
             .task {
                 if storeManager.products.isEmpty { await storeManager.loadProducts() }
             }
+            .alert(
+                "Purchase failed",
+                isPresented: purchaseFailedBinding,
+                presenting: purchaseFailureMessage
+            ) { _ in
+                Button("OK") { storeManager.clearPurchaseResult() }
+            } message: { message in
+                Text(message)
+            }
+            .alert(
+                "Restore failed",
+                isPresented: restoreFailedBinding,
+                presenting: restoreFailureMessage
+            ) { _ in
+                Button("OK") {}
+            } message: { message in
+                Text(message)
+            }
         }
+    }
+
+    // MARK: - Purchase/restore feedback
+
+    private var purchaseFailureMessage: String? {
+        if case .failed(let message) = storeManager.lastPurchaseResult { return message }
+        return nil
+    }
+
+    private var purchaseFailedBinding: Binding<Bool> {
+        Binding(
+            get: { purchaseFailureMessage != nil },
+            set: { if !$0 { storeManager.clearPurchaseResult() } }
+        )
+    }
+
+    private var restoreFailureMessage: String? {
+        if case .failed(let message) = storeManager.restoreState { return message }
+        return nil
+    }
+
+    private var restoreFailedBinding: Binding<Bool> {
+        Binding(
+            get: { restoreFailureMessage != nil },
+            set: { if !$0 { storeManager.clearRestoreResult() } }
+        )
     }
 
     private func header(_ colors: ThemeColors) -> some View {
@@ -94,11 +138,7 @@ struct StoreView: View {
                     Task { await storeManager.purchase(product) }
                 }
                 .disabled(storeManager.purchaseInFlight)
-                Button("Restore purchases") {
-                    Task { await storeManager.restore() }
-                }
-                .font(AppFont.callout())
-                .foregroundStyle(colors.accent)
+                restoreButton(colors)
             }
         } else {
             VStack(spacing: Spacing.xs) {
@@ -106,12 +146,30 @@ struct StoreView: View {
                 Text(unavailableMessage)
                     .font(AppFont.caption())
                     .foregroundStyle(colors.inkSecondary)
-                Button("Restore purchases") { Task { await storeManager.restore() } }
-                    .font(AppFont.callout())
-                    .foregroundStyle(colors.accent)
+                restoreButton(colors)
             }
             .padding(.vertical, Spacing.sm)
         }
+    }
+
+    /// A "Restore purchases" control that reflects in-flight/success state, so a
+    /// tap isn't silently swallowed while StoreKit does its (occasionally slow,
+    /// network-dependent) sync — and a genuine success has *some* confirmation
+    /// beyond "isPro quietly became true a moment later".
+    private func restoreButton(_ colors: ThemeColors) -> some View {
+        Group {
+            switch storeManager.restoreState {
+            case .restoring:
+                Label("Restoring…", systemImage: "arrow.triangle.2.circlepath")
+            case .succeeded:
+                Label("Restored", systemImage: "checkmark.circle.fill").foregroundStyle(colors.success)
+            case .idle, .failed:
+                Button("Restore purchases") { Task { await storeManager.restore() } }
+            }
+        }
+        .font(AppFont.callout())
+        .foregroundStyle(colors.accent)
+        .disabled(storeManager.restoreState == .restoring)
     }
 
     private func themeGallery(_ colors: ThemeColors) -> some View {

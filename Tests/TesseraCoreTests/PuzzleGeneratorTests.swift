@@ -57,4 +57,25 @@ final class PuzzleGeneratorTests: XCTestCase {
         XCTAssertEqual(a.board, b.board)
         XCTAssertEqual(a.solution, b.solution)
     }
+
+    /// Regresses a difficulty-contract violation: `mergeStrays` could previously
+    /// fold an undersized region into a neighbour with no upper bound, so a
+    /// "gentle" board (documented 3-4 cell pieces) could ship with one tile at
+    /// area 9-10 dominating the whole surface next to two scraps. Every shipped
+    /// tile must now fall within its difficulty's configured [min, max] range —
+    /// `makePuzzle` retries with a fresh sub-seed rather than accept a violation.
+    func testGeneratedTileSizesRespectDifficultyBounds() {
+        for difficulty in Difficulty.allCases {
+            let config = PuzzleGenerator.Configuration.configuration(for: difficulty)
+            for seed in UInt64(1)...UInt64(200) {
+                let puzzle = generator.endlessPuzzle(seed: seed, difficulty: difficulty)
+                for tile in puzzle.board.tiles {
+                    XCTAssertTrue(
+                        (config.minPieceSize...config.maxPieceSize).contains(tile.area),
+                        "\(puzzle.id) tile \(tile.id) has area \(tile.area), outside \(config.minPieceSize)...\(config.maxPieceSize)"
+                    )
+                }
+            }
+        }
+    }
 }

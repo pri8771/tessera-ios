@@ -99,9 +99,22 @@ final class GameViewModel {
         Haptics.selection()
     }
 
-    func rotate(_ id: String) {
+    /// Rotates an unplaced tile. If it's currently being dragged, the in-flight
+    /// `DragState` is updated (and re-snapped, given `geometry`) to the new
+    /// orientation too — otherwise a rotate mid-drag would commit the OLD shape on
+    /// drop while the ghost preview showed the new one.
+    func rotate(_ id: String, geometry: BoardGeometry? = nil) {
         guard placements[id] == nil else { return }
-        rotationByTile[id] = rotation(for: id).clockwise
+        let newRotation = rotation(for: id).clockwise
+        rotationByTile[id] = newRotation
+        if var state = drag, state.tileID == id {
+            state.rotation = newRotation
+            state.displayCells = displayCells(for: id, rotation: newRotation)
+            drag = state
+            if let geometry {
+                updateDrag(to: state.fingerLocation, geometry: geometry)
+            }
+        }
         Haptics.rotate()
     }
 
@@ -218,8 +231,14 @@ final class GameViewModel {
     }
 
     /// Picks a placed piece back up, returning it to the tray.
+    ///
+    /// Disallowed once the board is solved: without this guard, a tap landing
+    /// during the ~1.4s celebration window between `onSolved` firing and the
+    /// overlay appearing could silently pull a piece back out from under a
+    /// completion that had already been recorded, leaving the "Solved" overlay
+    /// covering a board that no longer is.
     func pickUp(placedTileID id: String) {
-        guard placements[id] != nil else { return }
+        guard !isSolved, placements[id] != nil else { return }
         placements.removeValue(forKey: id)
         if !trayOrder.contains(id) { trayOrder.append(id) }
         trayOrder.sort { lhs, rhs in
@@ -242,22 +261,43 @@ final class GameViewModel {
 
     // MARK: - Hint
 
-    /// Places one correct piece from the known solution. Returns the placed tile id.
+    /// Places one piece toward completion. Returns the placed tile id, or `nil` if
+    /// no hint could be given.
+    ///
+    /// This recomputes a solution for the *remaining* sub-puzzle (uncovered cells +
+    /// unplaced tiles) every time, rather than trusting `puzzle.solution` — which is
+    /// only valid for the ORIGINAL empty board. If the player has manually placed
+    /// even one tile at a position that differs from `puzzle.solution`'s assignment
+    /// for that tile (entirely normal: puzzles often have multiple valid tilings),
+    /// blindly applying the stale solution's placement for a different tile can
+    /// silently overlap the manual one — the tray empties to "0 left" while cells
+    /// remain uncovered and the board can never be detected as solved again. Solving
+    /// live against the current occupancy keeps every hint consistent with reality.
     @discardableResult
     func useHint() -> String? {
-        guard !isSolved else { return nil }
-        for solutionPlacement in puzzle.solution where trayOrder.contains(solutionPlacement.tileID) {
-            let tileID = solutionPlacement.tileID
-            placements[tileID] = solutionPlacement
-            rotationByTile[tileID] = solutionPlacement.rotation
-            trayOrder.removeAll { $0 == tileID }
-            hintsUsed += 1
-            moves += 1
-            Haptics.place()
-            evaluateSolved(triggerCallback: true)
-            return tileID
+        guard !isSolved, !trayOrder.isEmpty else { return nil }
+
+        let remainingSurface = board.surface.subtracting(occupiedCells)
+        let remainingTiles = trayOrder.compactMap { tileByID[$0] }
+        let subBoard = Board(surface: remainingSurface, tiles: remainingTiles)
+
+        guard let solution = Solver().solve(subBoard, limits: .generous).solution,
+              let next = solution.first else {
+            // The current arrangement can't be completed from here (a legitimate
+            // dead end the player painted themselves into, or an exhausted search).
+            Haptics.invalid()
+            return nil
         }
-        return nil
+
+        let tileID = next.tileID
+        placements[tileID] = next
+        rotationByTile[tileID] = next.rotation
+        trayOrder.removeAll { $0 == tileID }
+        hintsUsed += 1
+        moves += 1
+        Haptics.place()
+        evaluateSolved(triggerCallback: true)
+        return tileID
     }
 
     func revealSolution() {
@@ -310,7 +350,8 @@ final class GameViewModel {
             placements: Array(placements.values),
             elapsedSeconds: elapsedSeconds,
             moves: moves,
-            hintsUsed: hintsUsed
+            hintsUsed: hintsUsed,
+            savedAt: Date()
         )
     }
 

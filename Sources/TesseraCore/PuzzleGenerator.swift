@@ -88,14 +88,26 @@ public struct PuzzleGenerator {
         let solver = Solver()
 
         // Try a handful of sub-seeds; construction almost always succeeds on the
-        // first, but the solver gate must independently confirm `.solvable`.
-        for attempt in 0..<12 {
+        // first, but the solver gate must independently confirm `.solvable`, and
+        // the size-contract check below now also rejects attempts. 40 keeps the
+        // truly-defensive fallback path rare without meaningfully slowing
+        // generation (each attempt is cheap; a sweep of hundreds of seeds is still
+        // well under a second).
+        for attempt in 0..<40 {
             let attemptSeed = seed &+ UInt64(attempt) &* 0x9E3779B97F4A7C15
             var rng = SeededGenerator(seed: attemptSeed)
             let regions = partition(config: config, rng: &rng)
 
             // A degenerate partition (a single piece) is no puzzle; try again.
             guard regions.count >= 2 else { continue }
+
+            // Enforce the documented per-tile size contract. mergeStrays only folds
+            // an undersized region into a neighbour when the merged result stays
+            // within maxPieceSize (see mergeStrays below); on the rare occasion no
+            // such neighbour exists, a region can still land outside [min, max].
+            // Rather than accept a puzzle where "gentle" ships a piece dominating
+            // the whole board, retry with the next sub-seed.
+            guard regions.allSatisfy({ (config.minPieceSize...config.maxPieceSize).contains($0.count) }) else { continue }
 
             var tiles: [Tile] = []
             var solution: [Placement] = []
@@ -130,8 +142,8 @@ public struct PuzzleGenerator {
             )
         }
 
-        // Extremely defensive fallback: a trivially solvable 2x2 split.
-        return Self.fallbackPuzzle(id: id, mode: mode, difficulty: difficulty, seed: seed, dateKey: dateKey)
+        // Extremely defensive fallback, reusing the same bounded partition.
+        return fallbackPuzzle(id: id, mode: mode, difficulty: difficulty, seed: seed, dateKey: dateKey)
     }
 
     /// Partitions the rectangle into connected regions via seeded growth, then
@@ -169,7 +181,7 @@ public struct PuzzleGenerator {
             regions.append(region)
         }
 
-        return mergeStrays(regions, minSize: config.minPieceSize)
+        return mergeStrays(regions, minSize: config.minPieceSize, maxSize: config.maxPieceSize)
     }
 
     private func pickFrontier(_ frontier: [GridPoint], rng: inout SeededGenerator) -> GridPoint? {
@@ -179,8 +191,14 @@ public struct PuzzleGenerator {
 
     /// Merges any region below `minSize` into an orthogonally-adjacent region so no
     /// lonely monominoes survive. Always preserves connectivity (we only merge
-    /// across a shared edge).
-    private func mergeStrays(_ regions: [Set<GridPoint>], minSize: Int) -> [Set<GridPoint>] {
+    /// across a shared edge), and never merges into a host that would push the
+    /// result above `maxSize` — an unbounded merge here was the root cause of
+    /// pieces routinely landing 2x+ over the documented per-difficulty size cap
+    /// (a "gentle" board dominated by one giant blob next to two scraps). If a
+    /// stray has no host it can join without busting the cap, it's left as-is;
+    /// `makePuzzle`'s own size-contract check then retries with a fresh sub-seed
+    /// rather than shipping the violation.
+    private func mergeStrays(_ regions: [Set<GridPoint>], minSize: Int, maxSize: Int) -> [Set<GridPoint>] {
         var working = regions
         var didMerge = true
         while didMerge {
@@ -191,7 +209,7 @@ public struct PuzzleGenerator {
                 return working[lhs].sorted().first! < working[rhs].sorted().first!
             }
             for index in order where working[index].count < minSize {
-                guard let host = adjacentRegionIndex(to: working[index], in: working) else { continue }
+                guard let host = adjacentRegionIndex(to: working[index], in: working, maxSize: maxSize) else { continue }
                 working[host].formUnion(working[index])
                 working.remove(at: index)
                 didMerge = true
@@ -201,10 +219,12 @@ public struct PuzzleGenerator {
         return working
     }
 
-    private func adjacentRegionIndex(to region: Set<GridPoint>, in regions: [Set<GridPoint>]) -> Int? {
+    private func adjacentRegionIndex(to region: Set<GridPoint>, in regions: [Set<GridPoint>], maxSize: Int) -> Int? {
         let neighbourCells = Set(region.flatMap { $0.orthogonalNeighbours }).subtracting(region)
         let candidates = regions.indices.filter { index in
-            !regions[index].isDisjoint(with: neighbourCells) && regions[index] != region
+            !regions[index].isDisjoint(with: neighbourCells)
+                && regions[index] != region
+                && regions[index].count + region.count <= maxSize
         }
         // Deterministic: pick the region with the smallest minimum cell.
         return candidates.min { lhs, rhs in
@@ -232,25 +252,36 @@ public struct PuzzleGenerator {
 
     // MARK: - Fallback
 
-    static func fallbackPuzzle(
+    /// Last-resort construction for the rare case none of the normal attempts
+    /// produced a solvable, size-compliant board. Reuses the same bounded
+    /// `partition`/`mergeStrays` machinery as the main path (with a seed offset
+    /// so it explores a fresh partition rather than repeating a failed attempt)
+    /// instead of a bespoke hardcoded shape: a hardcoded 2x2-domino split — used
+    /// here previously — always solves, but ships two 2-cell pieces regardless of
+    /// difficulty, which is a size-contract violation in its own right the moment
+    /// this path actually fires (every difficulty's minimum piece size is 3).
+    private func fallbackPuzzle(
         id: String,
         mode: PuzzleMode,
         difficulty: Difficulty,
         seed: UInt64,
         dateKey: String?
     ) -> Puzzle {
-        // A 2x2 surface split into two dominoes — always solvable.
-        let surface: Set<GridPoint> = [
-            GridPoint(x: 0, y: 0), GridPoint(x: 1, y: 0),
-            GridPoint(x: 0, y: 1), GridPoint(x: 1, y: 1)
-        ]
-        let left = Tile(id: "p0", cells: [GridPoint(x: 0, y: 0), GridPoint(x: 0, y: 1)])
-        let right = Tile(id: "p1", cells: [GridPoint(x: 0, y: 0), GridPoint(x: 0, y: 1)])
-        let board = Board(surface: surface, tiles: [left, right])
-        let solution = [
-            Placement(tileID: "p0", origin: GridPoint(x: 0, y: 0), rotation: .degrees0),
-            Placement(tileID: "p1", origin: GridPoint(x: 1, y: 0), rotation: .degrees0)
-        ]
+        let config = Configuration.configuration(for: difficulty)
+        var rng = SeededGenerator(seed: seed &+ 0xF0F0_F0F0_F0F0_F0F0)
+        let regions = partition(config: config, rng: &rng)
+
+        var tiles: [Tile] = []
+        var solution: [Placement] = []
+        for (index, region) in regions.enumerated() {
+            let tileID = "fallback-p\(index)"
+            let tile = Tile(id: tileID, cells: Tile.normalize(region))
+            tiles.append(tile)
+            solution.append(Self.placement(for: tile, reconstructing: region))
+        }
+        let surface = regions.reduce(into: Set<GridPoint>()) { $0.formUnion($1) }
+        let board = Board(surface: surface, tiles: tiles)
+
         return Puzzle(
             id: id, mode: mode, difficulty: difficulty, seed: seed,
             dateKey: dateKey, board: board, solution: solution

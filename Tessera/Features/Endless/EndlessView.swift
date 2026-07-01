@@ -63,7 +63,7 @@ struct EndlessView: View {
                 if let best {
                     Text("Best: \(best) moves")
                         .font(AppFont.caption())
-                        .foregroundStyle(colors.inkTertiary)
+                        .foregroundStyle(colors.inkSecondary)
                 }
             }
             Spacer()

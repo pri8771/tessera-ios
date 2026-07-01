@@ -67,6 +67,11 @@ struct HomeView: View {
             if handleAutoplayHook() { return }
             if !store.settings.hasSeenOnboarding { showOnboarding = true }
         }
+        .onChange(of: store.settings.hasSeenOnboarding) { _, hasSeen in
+            // Reacts to Settings' "Replay onboarding" (which resets this flag)
+            // even though Home never re-appears while its own sheet is up.
+            if !hasSeen { showOnboarding = true }
+        }
     }
 
     // MARK: - Sections
@@ -91,6 +96,11 @@ struct HomeView: View {
             StatTile(value: "\(store.progress.longestStreak)", label: "Best streak", systemImage: "trophy")
         }
         .onTapGesture { route = .stats }
+        // Without this, VoiceOver announces three disconnected tiles with no
+        // indication the row as a whole is tappable.
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint("Opens your full stats.")
     }
 
     @ViewBuilder
@@ -130,7 +140,7 @@ struct HomeView: View {
                             }
                             Text("Come back tomorrow for a new board.")
                                 .font(AppFont.caption())
-                                .foregroundStyle(colors.inkTertiary)
+                                .foregroundStyle(colors.inkSecondary)
                         }
                         Spacer()
                     }

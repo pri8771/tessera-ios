@@ -181,8 +181,19 @@ public struct Solver {
         }
 
         var outcome: SolveOutcome {
+            // Check capHit first. For `solve()` (stopAtFirst=true) these two can
+            // never both be true — finding a solution unwinds immediately, before
+            // any later node-budget check — so this reordering doesn't change that
+            // path. It matters for `countSolutions()` (stopAtFirst=false), which
+            // keeps searching past the first solution: there, a run can have
+            // solutionCount > 0 *and* capHit if the budget expired while still
+            // looking for more. Reporting `.solvable` in that case would hand back
+            // a partial count as if it were the final, exact answer — exactly the
+            // "undecided must never be conflated with a definite result" bug the
+            // three-state contract exists to prevent.
+            if capHit { return .undecided }
             if firstSolution != nil || solutionCount > 0 { return .solvable }
-            return capHit ? .undecided : .unsolvable
+            return .unsolvable
         }
 
         mutating func run() {

@@ -143,9 +143,24 @@ final class GameStore {
 
     func savedGame(forPuzzleID id: String) -> SavedGame? { savedGames[id] }
 
+    /// Caps how many in-progress boards persist at once. Nothing in the UI ever
+    /// resumes a *specific* abandoned save except "today's daily" and Endless's
+    /// own in-flight attempt — both always the most recent — so once an entry
+    /// ages out of that cap it can never be reached again anyway; keeping it
+    /// around would just grow the save file forever across many play sessions.
+    private static let maxSavedGames = 10
+
     func saveGame(_ game: SavedGame) {
         savedGames[game.puzzleID] = game
+        pruneSavedGames()
         store.save(savedGames, to: Self.savedGamesKey)
+    }
+
+    private func pruneSavedGames() {
+        guard savedGames.count > Self.maxSavedGames else { return }
+        let overflow = savedGames.count - Self.maxSavedGames
+        let oldest = savedGames.values.sorted { $0.savedAt < $1.savedAt }.prefix(overflow)
+        for stale in oldest { savedGames.removeValue(forKey: stale.puzzleID) }
     }
 
     func clearSavedGame(puzzleID: String) {

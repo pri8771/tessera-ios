@@ -6,6 +6,7 @@ struct GameView: View {
     @Environment(\.theme) private var theme
     @Environment(\.colorScheme) private var scheme
     @Environment(GameStore.self) private var store
+    @Environment(\.scenePhase) private var scenePhase
 
     let config: GameConfig
     var onFinished: (() -> Void)?
@@ -58,6 +59,13 @@ struct GameView: View {
         }
         .onReceive(timer) { _ in if !showSolved { vm.tick() } }
         .onChange(of: vm.moves) { _, _ in persistSnapshot() }
+        .onChange(of: scenePhase) { _, phase in
+            // A backgrounding/interruption mid-drag never delivers DragGesture's
+            // onEnded, so without this the ghost preview and DragState would be
+            // stuck forever — the piece would look "held" with no way to drop or
+            // cancel it. Clearing on any non-active phase makes it safe.
+            if phase != .active { vm.cancelDrag() }
+        }
         .onDisappear { persistSnapshot() }
     }
 
@@ -116,11 +124,14 @@ struct GameView: View {
 
     private func boardArea(_ colors: ThemeColors) -> some View {
         GeometryReader { geo in
+            let boardGeometry = BoardGeometry(surface: vm.board.surface, containerSize: geo.size, inset: 14)
             BoardView(
                 vm: vm,
-                geometry: BoardGeometry(surface: vm.board.surface, containerSize: geo.size, inset: 14),
+                geometry: boardGeometry,
                 breathingEnabled: store.settings.breathingEnabled,
-                onPickUpPlaced: { vm.pickUp(placedTileID: $0) }
+                showGridGuides: store.settings.showGridGuides,
+                onPickUpPlaced: { vm.pickUp(placedTileID: $0) },
+                onPlaceSelected: { _ = vm.placeSelected(coveringBoardCell: $0) }
             )
             .background(
                 Color.clear
@@ -128,25 +139,26 @@ struct GameView: View {
                     .onChange(of: geo.frame(in: .named("game"))) { _, new in boardFrame = new }
             )
             // Drag-free placement: with a piece selected, tap an empty spot to place
-            // it there. Keeps the board playable without dragging (accessibility) and
-            // is a faster path for everyone. Taps on placed pieces are handled inside
-            // BoardView (pick up) and take precedence.
+            // it there. Keeps the board playable without dragging and is a faster
+            // path for everyone. Taps on placed pieces are handled inside BoardView
+            // (pick up) and take precedence. VoiceOver placement is handled
+            // separately inside BoardView, where each empty cell is its own
+            // accessibility element (a raw screen coordinate is meaningless to a
+            // screen-reader user, so this gesture alone can't serve them).
             .contentShape(Rectangle())
             .gesture(
                 SpatialTapGesture(coordinateSpace: .named("game")).onEnded { value in
                     guard vm.selectedTileID != nil else { return }
                     let local = CGPoint(x: value.location.x - boardFrame.minX,
                                         y: value.location.y - boardFrame.minY)
-                    let cell = BoardGeometry(surface: vm.board.surface, containerSize: geo.size, inset: 14).cell(at: local)
+                    let cell = boardGeometry.cell(at: local)
                     vm.placeSelected(coveringBoardCell: cell)
                 }
             )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .accessibilityElement()
-        .accessibilityLabel("Puzzle board")
-        .accessibilityValue("\(vm.board.tiles.count - vm.remainingCount) of \(vm.board.tiles.count) pieces placed")
-        .accessibilityHint("Select a piece below, then tap a spot here to place it.")
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Puzzle board, \(vm.board.tiles.count - vm.remainingCount) of \(vm.board.tiles.count) pieces placed")
     }
 
     // MARK: - Controls
@@ -154,7 +166,7 @@ struct GameView: View {
     private func controls(_ colors: ThemeColors) -> some View {
         HStack(spacing: Spacing.md) {
             controlButton(title: "Rotate", system: "rotate.right", enabled: canRotate) {
-                if let id = vm.selectedTileID { vm.rotate(id) }
+                if let id = vm.selectedTileID { vm.rotate(id, geometry: geometry) }
             }
             controlButton(title: "Hint", system: "lightbulb", enabled: !vm.isSolved) {
                 _ = vm.useHint()
@@ -199,7 +211,11 @@ struct GameView: View {
             trayCellSize: trayCellSize,
             onDragChanged: { tileID, gameLocation in
                 let local = CGPoint(x: gameLocation.x - boardFrame.minX, y: gameLocation.y - boardFrame.minY)
-                if vm.drag == nil {
+                // Compare tileID, not just nil-ness: if a stale DragState from a
+                // different piece is still around (e.g. a previous drag's onEnded
+                // never fired), a new drag on another piece must start fresh rather
+                // than hijacking it and moving the WRONG piece's ghost preview.
+                if vm.drag?.tileID != tileID {
                     vm.beginDrag(tileID: tileID, at: local, geometry: geometry)
                 } else {
                     vm.updateDrag(to: local, geometry: geometry)

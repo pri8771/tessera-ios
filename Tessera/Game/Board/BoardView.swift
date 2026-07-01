@@ -11,7 +11,9 @@ struct BoardView: View {
     let vm: GameViewModel
     let geometry: BoardGeometry
     let breathingEnabled: Bool
+    var showGridGuides: Bool = true
     var onPickUpPlaced: (String) -> Void
+    var onPlaceSelected: (GridPoint) -> Void = { _ in }
 
     var body: some View {
         let colors = theme.colors(for: scheme)
@@ -20,6 +22,7 @@ struct BoardView: View {
             emptyCells(colors)
             placedPieces(colors)
             dragPreview(colors)
+            accessibleCellTargets(colors)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -38,14 +41,43 @@ struct BoardView: View {
 
     private func emptyCells(_ colors: ThemeColors) -> some View {
         let occupied = vm.occupiedCells
+        let showGridGuides = showGridGuides
         return Canvas { context, _ in
             for cell in vm.board.surface where !occupied.contains(cell) {
                 let rect = geometry.rect(for: cell).insetBy(dx: 1.5, dy: 1.5)
                 let radius = geometry.cellSize * Radius.cellFraction
                 let path = Path(roundedRect: rect, cornerRadius: radius)
                 context.fill(path, with: .color(colors.cellEmpty))
-                context.stroke(path, with: .color(colors.gridLine), lineWidth: 1)
+                if showGridGuides {
+                    context.stroke(path, with: .color(colors.gridLine), lineWidth: 1)
+                }
             }
+        }
+    }
+
+    /// VoiceOver-only per-empty-cell targets. `emptyCells` above is drawn with
+    /// `Canvas`, which produces no accessibility nodes at all, and the sighted
+    /// placement gesture (`SpatialTapGesture` in `GameView.boardArea`) resolves a
+    /// screen-reader "activate" to nothing meaningful, since VoiceOver doesn't
+    /// convey *where* on screen a double-tap lands. Each empty cell gets its own
+    /// invisible, non-hit-testable element instead, so VoiceOver users can navigate
+    /// cell by cell and activate the exact one they want.
+    private func accessibleCellTargets(_ colors: ThemeColors) -> some View {
+        let occupied = vm.occupiedCells
+        let hasSelection = vm.selectedTileID != nil
+        return ForEach(Array(vm.board.surface.subtracting(occupied)).sorted(), id: \.self) { cell in
+            let rect = geometry.rect(for: cell)
+            Color.clear
+                .frame(width: rect.width, height: rect.height)
+                .position(x: rect.midX, y: rect.midY)
+                .allowsHitTesting(false)
+                .accessibilityElement()
+                .accessibilityLabel("Empty cell, row \(cell.y + 1), column \(cell.x + 1)")
+                .accessibilityAddTraits(hasSelection ? [.isButton] : [])
+                .accessibilityHint(hasSelection
+                    ? "Places the selected piece here if it fits."
+                    : "Select a piece below first.")
+                .accessibilityAction { onPlaceSelected(cell) }
         }
     }
 
@@ -63,6 +95,10 @@ struct BoardView: View {
                             .position(piecePosition(for: cells))
                             .scaleEffect(breath)
                             .onTapGesture { onPickUpPlaced(tileID) }
+                            .accessibilityElement()
+                            .accessibilityLabel("Placed piece, \(cells.count) cells")
+                            .accessibilityHint("Double tap to pick it back up.")
+                            .accessibilityAction { onPickUpPlaced(tileID) }
                             .transition(.scale(scale: 0.6).combined(with: .opacity))
                     }
                 }

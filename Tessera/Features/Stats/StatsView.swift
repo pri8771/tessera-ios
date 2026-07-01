@@ -38,7 +38,7 @@ struct StatsView: View {
                                             Text("\(best) moves")
                                                 .foregroundStyle(colors.ink)
                                         } else {
-                                            Text("—").foregroundStyle(colors.inkTertiary)
+                                            Text("—").foregroundStyle(colors.inkSecondary)
                                         }
                                     }
                                     .font(AppFont.body())

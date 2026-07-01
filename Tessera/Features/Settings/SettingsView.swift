@@ -38,8 +38,9 @@ struct SettingsView: View {
                                 Button {
                                     Task { await storeManager.restore() }
                                 } label: {
-                                    settingsRow("Restore purchases", system: "arrow.clockwise", colors: colors)
+                                    settingsRow(restoreRowTitle, system: restoreRowIcon, colors: colors)
                                 }
+                                .disabled(storeManager.restoreState == .restoring)
                                 Divider().background(colors.separator)
                                 Button { showStore = true } label: {
                                     settingsRow(store.isPro ? "Tessera Pro · Unlocked" : "Unlock Tessera Pro",
@@ -54,6 +55,13 @@ struct SettingsView: View {
                                 Divider().background(colors.separator)
                                 aboutRow("Privacy", value: "Offline · no tracking", colors: colors)
                                 Divider().background(colors.separator)
+                                Button {
+                                    store.settings.hasSeenOnboarding = false
+                                    dismiss()
+                                } label: {
+                                    settingsRow("Replay onboarding", system: "sparkles.rectangle.stack", colors: colors)
+                                }
+                                Divider().background(colors.separator)
                                 Button(role: .destructive) { confirmReset = true } label: {
                                     settingsRow("Reset progress", system: "trash", colors: colors, destructive: true)
                                 }
@@ -62,7 +70,7 @@ struct SettingsView: View {
 
                         Text("Tessera stores everything on your device. No account, no analytics, no ads.")
                             .font(AppFont.caption())
-                            .foregroundStyle(colors.inkTertiary)
+                            .foregroundStyle(colors.inkSecondary)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, Spacing.lg)
                     }
@@ -83,7 +91,38 @@ struct SettingsView: View {
             } message: {
                 Text("This clears your streak, history, and saved boards. It can't be undone.")
             }
+            .alert("Restore failed", isPresented: restoreFailedBinding, presenting: restoreFailureMessage) { _ in
+                Button("OK") {}
+            } message: { Text($0) }
         }
+    }
+
+    private var restoreRowTitle: String {
+        switch storeManager.restoreState {
+        case .restoring: return "Restoring…"
+        case .succeeded: return "Restored"
+        case .idle, .failed: return "Restore purchases"
+        }
+    }
+
+    private var restoreRowIcon: String {
+        switch storeManager.restoreState {
+        case .restoring: return "arrow.triangle.2.circlepath"
+        case .succeeded: return "checkmark.circle.fill"
+        case .idle, .failed: return "arrow.clockwise"
+        }
+    }
+
+    private var restoreFailureMessage: String? {
+        if case .failed(let message) = storeManager.restoreState { return message }
+        return nil
+    }
+
+    private var restoreFailedBinding: Binding<Bool> {
+        Binding(
+            get: { restoreFailureMessage != nil },
+            set: { if !$0 { storeManager.clearRestoreResult() } }
+        )
     }
 
     private func themeSection(_ colors: ThemeColors) -> some View {
