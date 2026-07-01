@@ -16,6 +16,7 @@ struct GameView: View {
     @State private var showSolved = false
     @State private var showRipple = false
     @State private var didRecord = false
+    @State private var showHintUnavailable = false
 
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     private let trayCellSize: CGFloat = 26
@@ -67,6 +68,11 @@ struct GameView: View {
             if phase != .active { vm.cancelDrag() }
         }
         .onDisappear { persistSnapshot() }
+        .alert("No hint available", isPresented: $showHintUnavailable) {
+            Button("OK") {}
+        } message: {
+            Text("This arrangement can't be completed from here. Try picking up a piece and placing it differently.")
+        }
     }
 
     // MARK: - Header
@@ -169,7 +175,13 @@ struct GameView: View {
                 if let id = vm.selectedTileID { vm.rotate(id, geometry: geometry) }
             }
             controlButton(title: "Hint", system: "lightbulb", enabled: !vm.isSolved) {
-                _ = vm.useHint()
+                // A `nil` here (button was enabled, so the puzzle isn't already
+                // solved) means the CURRENT arrangement can't be completed — a
+                // real, reachable outcome of ordinary mixed manual/hint play, not
+                // a hypothetical. Without this, nothing visibly happens, which
+                // reads as "the game is frozen" rather than "you've reached a
+                // dead end from here."
+                if vm.useHint() == nil { showHintUnavailable = true }
             }
         }
     }
