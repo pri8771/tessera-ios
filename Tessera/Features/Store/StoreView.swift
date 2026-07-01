@@ -192,7 +192,7 @@ struct StoreView: View {
     private func legal(_ colors: ThemeColors) -> some View {
         Text("Payment is charged to your Apple ID. Purchases restore on your devices via the App Store.")
             .font(AppFont.caption())
-            .foregroundStyle(colors.inkTertiary)
+            .foregroundStyle(colors.inkSecondary)
             .multilineTextAlignment(.center)
             .padding(.horizontal, Spacing.lg)
     }
