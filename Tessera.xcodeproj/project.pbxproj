@@ -34,6 +34,7 @@
 		85F5B1078F292AE3A3BBEE0A /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0753CDB148DBD8BE3E7C2C1 /* Components.swift */; };
 		914D16F2E26843A6CB5804F3 /* SolvedBoardThumbnail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D62CBA32DA45A25E3574EEF /* SolvedBoardThumbnail.swift */; };
 		93007579E8E4D456E9E28FE9 /* StoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03561449C1808B809EF63283 /* StoreView.swift */; };
+		943F89D864848A52E1E0EA9B /* GameFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0B81E59ABBA6FE860F5DB9 /* GameFlowUITests.swift */; };
 		A6C7CFA92F91B79794188FD4 /* EndlessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5041C077C46D4DE610A4689E /* EndlessView.swift */; };
 		B2C68DA1604FCB7819149F59 /* TrayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C045E9C9F7E44E0C65285C2 /* TrayView.swift */; };
 		BC9E0B8EF0AA73B9380A639D /* Spacing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29BC30C4E291935613E8E7C8 /* Spacing.swift */; };
@@ -51,6 +52,13 @@
 
 /* Begin PBXContainerItemProxy section */
 		ED03A65019F95301D26C52E6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 333D216A6D8399D96BB6FDC7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E7A2C29018472713157B2E67;
+			remoteInfo = Tessera;
+		};
+		FAE80AADDA8D918981D9E402 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 333D216A6D8399D96BB6FDC7 /* Project object */;
 			proxyType = 1;
@@ -80,6 +88,7 @@
 		70E24ADFB6ADB6A944C403EF /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		765B3338382C2E3E81C622C6 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		7A8F0E59CABFCF3B15A8564E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		7C5C15A56155276976D651EC /* TesseraUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TesseraUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7EC68FA46CF9E5A2286220CF /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		800068721C618631440D2CCC /* TesseraAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TesseraAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8E69052FF107707F5B089992 /* GameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStore.swift; sourceTree = "<group>"; };
@@ -100,6 +109,7 @@
 		F0315E032B5DE5F1DACD348E /* StatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsView.swift; sourceTree = "<group>"; };
 		F423A3060E0BA9E794B75241 /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
 		F9E3D53B6B58506C64CD4A51 /* Tessera.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Tessera.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FA0B81E59ABBA6FE860F5DB9 /* GameFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameFlowUITests.swift; sourceTree = "<group>"; };
 		FE98CD4907B6DA2303711B80 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -149,6 +159,14 @@
 				F0315E032B5DE5F1DACD348E /* StatsView.swift */,
 			);
 			path = Stats;
+			sourceTree = "<group>";
+		};
+		4162CB5D23CBB4011C678F10 /* TesseraUITests */ = {
+			isa = PBXGroup;
+			children = (
+				FA0B81E59ABBA6FE860F5DB9 /* GameFlowUITests.swift */,
+			);
+			path = TesseraUITests;
 			sourceTree = "<group>";
 		};
 		41C5272822D9461C9B7887F9 /* Store */ = {
@@ -222,6 +240,7 @@
 			children = (
 				F9E3D53B6B58506C64CD4A51 /* Tessera.app */,
 				800068721C618631440D2CCC /* TesseraAppTests.xctest */,
+				7C5C15A56155276976D651EC /* TesseraUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -249,6 +268,7 @@
 				E55A0795674199BF1CE5EC02 /* Packages */,
 				EE0A6C1709AA204583254D7B /* Tessera */,
 				F847B361FEC3EA360663E693 /* TesseraTests */,
+				4162CB5D23CBB4011C678F10 /* TesseraUITests */,
 				7CA4AF27E4E0E2E09B717289 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -345,6 +365,24 @@
 			productReference = 800068721C618631440D2CCC /* TesseraAppTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		CF847CD64E9839B0962A6480 /* TesseraUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 266742553371493995D4A0A4 /* Build configuration list for PBXNativeTarget "TesseraUITests" */;
+			buildPhases = (
+				3CDCC392CF6E4F671AAD5A7F /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				817DFB6F233BAF9ED3540775 /* PBXTargetDependency */,
+			);
+			name = TesseraUITests;
+			packageProductDependencies = (
+			);
+			productName = TesseraUITests;
+			productReference = 7C5C15A56155276976D651EC /* TesseraUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		E7A2C29018472713157B2E67 /* Tessera */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = B551177FE9D99586570BF0C6 /* Build configuration list for PBXNativeTarget "Tessera" */;
@@ -375,11 +413,16 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					4A0B899EEB9B18EC840CDE54 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 796XH483R4;
 						ProvisioningStyle = Automatic;
 					};
+					CF847CD64E9839B0962A6480 = {
+						DevelopmentTeam = 796XH483R4;
+						ProvisioningStyle = Automatic;
+						TestTargetID = E7A2C29018472713157B2E67;
+					};
 					E7A2C29018472713157B2E67 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 796XH483R4;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -403,6 +446,7 @@
 			targets = (
 				E7A2C29018472713157B2E67 /* Tessera */,
 				4A0B899EEB9B18EC840CDE54 /* TesseraAppTests */,
+				CF847CD64E9839B0962A6480 /* TesseraUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -462,6 +506,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		3CDCC392CF6E4F671AAD5A7F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				943F89D864848A52E1E0EA9B /* GameFlowUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4976676ABE9A203BB9125A1A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -473,6 +525,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		817DFB6F233BAF9ED3540775 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E7A2C29018472713157B2E67 /* Tessera */;
+			targetProxy = FAE80AADDA8D918981D9E402 /* PBXContainerItemProxy */;
+		};
 		F0493483FEEB304A23C516AF /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = E7A2C29018472713157B2E67 /* Tessera */;
@@ -518,7 +575,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 796XH483R4;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -568,13 +625,30 @@
 			};
 			name = Debug;
 		};
+		285307FBF1171235D48CB61A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.priyanshchordia.tessera.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Tessera;
+			};
+			name = Release;
+		};
 		686CFDF37DB6E9FF19839698 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Tessera/Resources/Info.plist;
@@ -595,8 +669,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Tessera/Resources/Info.plist;
@@ -629,6 +702,24 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tessera.app/Tessera";
 			};
 			name = Release;
+		};
+		D41DC636138B4A8EE8762A1D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.priyanshchordia.tessera.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Tessera;
+			};
+			name = Debug;
 		};
 		D5AD07989C2FC28BAD6F2451 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -667,7 +758,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 796XH483R4;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -709,6 +800,15 @@
 			buildConfigurations = (
 				23F521575F28461E34F32B1F /* Debug */,
 				A0E5DE1F2228CB9087571B2C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		266742553371493995D4A0A4 /* Build configuration list for PBXNativeTarget "TesseraUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D41DC636138B4A8EE8762A1D /* Debug */,
+				285307FBF1171235D48CB61A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
