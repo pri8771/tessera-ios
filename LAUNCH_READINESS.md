@@ -1,5 +1,19 @@
 # Tessera — Launch Readiness (v1)
 
+> **⛳️ 2026-06-30 build update — V1 is now built.** This document was authored as a
+> build-to spec when the repo was docs-only. Since then the full app has been
+> implemented and verified: the pure-Swift engine now has a **three-state
+> solvability solver** and a **solver-verified deterministic generator** (daily +
+> endless); the SwiftUI app target exists with the design system (5 light/dark
+> themes), the `Canvas`/`TimelineView` board with breathing + drag-to-place + solve
+> ripple, Home/Onboarding/Endless/Archive/Settings/Store/Stats, local persistence,
+> the `ImageRenderer` share card, and StoreKit 2 (free daily + one-time Tessera
+> Pro). It compiles and tests green (`xcodebuild ... test`) for the iOS Simulator
+> with 19 core + 5 app tests. The "pre-build" language below is retained for the
+> historical scope; see **[Docs/CURRENT_STATUS.md](Docs/CURRENT_STATUS.md)** for the
+> as-built state and the remaining path (device validation, App Store Connect
+> product setup, store metadata, accessibility deep-pass).
+
 > Tessera is a calm, gallery-like **daily tessellation puzzle for iOS** — tagline "A living jigsaw that breathes." The player drags and rotates irregular/polyomino tiles onto a surface so they tessellate with no gaps or overlaps; a solved board locks with a satisfying ripple. It targets people who want a short, low-pressure, visually beautiful daily ritual (a calmer cousin of Wordle), with a deterministic daily puzzle everyone shares plus an Endless mode. **Implementation maturity: pre-build / docs-first.** The only real code is a pure-Swift puzzle core (`Sources/TesseraCore/TesseraCore.swift`, ~146 LOC) with 3 passing unit tests; there is **no app target, no SwiftUI, no rendering, no persistence, no StoreKit, no Xcode project, and no solver.** The `Tessera/` app tree is empty `.gitkeep` placeholders. This document is therefore the authoritative **build-to spec** for v1; per-feature status below is honest about what exists versus what must still be built.
 
 ---
